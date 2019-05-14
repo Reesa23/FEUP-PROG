@@ -1,0 +1,158 @@
+#include<iostream>
+#include<vector>
+#include<fstream>
+#include <sstream>
+#include <string>
+
+using namespace std;
+
+struct Date {
+	string ano, mes, dia;
+};
+
+struct Address {
+	string Street;
+	string Door, Floor, Postal_Code;
+	string Locality;
+};
+
+struct Client {
+	string name;
+	string nif;
+	string agregado;
+	Address address;
+	vector<string> pacotes; //Aquilo que é selecionado
+	string compras;
+};
+
+struct TravelPack {
+	string identifier;
+	string locais;
+	string start_date;
+	string end_date;
+	string price;
+	string capacidade;
+	string vendidos;
+};
+
+struct Agency {
+	string Name;
+	int NIF;
+	string url;
+	Address address;
+	vector<Client> clients;
+	vector<TravelPack> packages;
+};
+
+Address getAddress(string info)
+{
+	stringstream address_info(info);
+	string temp;
+	vector<string> address_temp;
+	while (getline(address_info, temp,  '/'))
+	{
+		address_temp.push_back(temp);
+	}
+
+	Address address_comp;
+	address_comp.Street = address_temp[0];
+	address_comp.Door = address_temp[1];
+	address_comp.Floor = address_temp[2];
+	address_comp.Postal_Code = address_temp[3];
+	address_comp.Locality = address_temp[4];
+	
+	return address_comp;
+}
+
+void DefAgency(Agency &NiceHolidays, vector<string> agency_info)
+{
+	NiceHolidays.Name = agency_info[0];
+	NiceHolidays.NIF = stoi(agency_info[1]); //stoi -> convert string in int
+	NiceHolidays.url = agency_info[2];
+	NiceHolidays.address = getAddress(agency_info[3]);
+	
+	//Client Information
+	ifstream client_info(agency_info[4]);
+	vector<string> client_list;
+	Client candido;
+	vector<Client> clientela;
+	string name;
+	int iter = 0;
+
+	//Put file information in a vector
+	while (getline(client_info, name))
+	{
+		if (iter >= 0) client_list.push_back(name);
+		if (iter == 4)
+		{
+			candido.name= client_list[0];
+			candido.nif = client_list[1];
+			candido.compras = client_list[2];
+			candido.address = getAddress(client_list[3]);
+			candido.compras = client_list[4];
+			clientela.push_back(candido);
+			client_list.clear();
+			iter = -1;
+		}
+		else iter++;
+	}
+
+	NiceHolidays.clients = clientela;
+	client_info.close();
+
+
+	//TravelPack Information
+	ifstream pack_info(agency_info[5]);
+	vector<string> pack_list;
+	vector<TravelPack> vetor_pacote;
+	TravelPack pacote;
+	string ultimo_pacote;
+	getline(pack_info, ultimo_pacote);
+
+	//Put file information in a vector
+	while (getline(pack_info, name))
+	{
+		if (iter >= 0) pack_list.push_back(name);
+		if (iter == 6)
+		{
+			pacote.identifier = pack_list[0];
+			pacote.locais = pack_list[1];
+			pacote.start_date = pack_list[2];
+			pacote.end_date = pack_list[3];
+			pacote.price = pack_list[4];
+			pacote.capacidade = pack_list[5];
+			pacote.vendidos = pack_list[6];
+			vetor_pacote.push_back(pacote);
+			pack_list.clear();
+			iter = -1;
+
+		}
+		else iter++;
+	}
+	pack_info.close();
+
+	NiceHolidays.packages = vetor_pacote;
+
+}
+
+int main()
+{ 
+
+	Agency NiceHolidays;
+	ifstream info(file_name);
+	vector<string> agency_info;
+	string name;
+	if (info.is_open()) 
+	{
+		while (getline(info, name))
+		{
+			agency_info.push_back(name);
+		}
+		info.close();
+	}
+	else cout << "Unable to open file";
+	
+	DefAgency(NiceHolidays, agency_info); //Atribuir caracteristicas à agencia
+
+	return 0; 
+}
